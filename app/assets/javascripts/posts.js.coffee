@@ -15,7 +15,22 @@ $ ->
     validate: (attrs) ->
       return "title cannot be empty" if $.trim(attrs.title) ==""
 
-    window.NewPostView = Backbone.View.extend
+  window.Posts = Backbone.Collection.extend
+    model: Post
+
+  window.posts = new Posts()
+  posts.saveAll = ->
+    this.each (post) ->
+      res = post.save {},
+        success: (model, response, options) ->
+          $("#post_#{post.get('timestamp')}").remove()
+        error: (model, xhr, options) ->
+          $("#post_#{post.get('timestamp')} .error").html xhr.responseText
+      unless res
+        $("#post_#{post.get('timestamp')} .error").html post.validationError
+
+
+  window.NewPostView = Backbone.View.extend
       events:
         "click .delete": "delete"
         "click .save_one": "saveOne"
@@ -64,4 +79,8 @@ $ ->
 
   $("#add_one").on 'click', ->
     post = new Post()
+    posts.add(post)
     new NewPostView({model: post, el: "#new_area"}).render()
+
+  $("#save_all").on 'click', ->
+    posts.saveAll()
